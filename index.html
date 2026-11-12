@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BERSERK — Киберспортивное пространство 24/7</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Russo+One&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #070709;
+            --surface: #101014;
+            --surface-2: #18181f;
+            --border: rgba(255, 255, 255, 0.1);
+            --red: #ff2a3c;
+            --red-glow: rgba(255, 42, 60, 0.35);
+            --text: #ffffff;
+            --muted: #9ca3af;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+        body { overflow-x: hidden; }
+
+        /* Входная анимация (Шторки-затворы) */
+        .gate-left, .gate-right {
+            position: fixed; top: 0; width: 50vw; height: 100vh;
+            background: #040405; z-index: 9999; transition: transform 0.95s var(--ease);
+        }
+        .gate-left { left: 0; border-right: 1px solid rgba(255, 42, 60, 0.45); }
+        .gate-right { right: 0; }
+        body.entered .gate-left { transform: translateX(-100%); }
+        body.entered .gate-right { transform: translateX(100%); }
+
+        .gate-badge {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 10000; font-family: 'Russo One', sans-serif; font-size: 28px;
+            letter-spacing: 5px; color: var(--red); transition: opacity 0.35s; pointer-events: none;
+        }
+        body.entered .gate-badge { opacity: 0; }
+
+        .wrap { max-width: 1220px; margin: 0 auto; padding: 0 26px; }
+
+        /* Навигация */
+        header {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            background: rgba(7, 7, 9, 0.85); backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav { display: flex; justify-content: space-between; align-items: center; height: 74px; }
+        .logo { font-family: 'Russo One', sans-serif; font-size: 24px; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; color: #fff; }
+        .logo-dot { width: 10px; height: 10px; background: var(--red); border-radius: 2px; transform: rotate(45deg); }
+        .nav-links { display: flex; gap: 32px; font-size: 13px; font-weight: 500; color: var(--muted); }
+        .nav-links a { text-decoration: none; color: inherit; transition: 0.2s; }
+        .nav-links a:hover { color: var(--red); }
+
+        .btn-red {
+            background: var(--red); color: #ffffff; font-weight: 700; font-size: 13px;
+            padding: 12px 24px; border-radius: 6px; text-decoration: none; border: none;
+            cursor: pointer; transition: transform 0.25s, box-shadow 0.25s; display: inline-block;
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .btn-red:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--red-glow); }
+
+        /* Hero-блок */
+        .hero {
+            padding: 155px 0 100px; position: relative;
+            background: radial-gradient(circle at 80% 20%, rgba(255, 42, 60, 0.16) 0%, transparent 50%),
+                        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 45%);
+        }
+        .anim-up { opacity: 0; transform: translateY(32px); transition: all 0.85s var(--ease); }
+        body.entered .anim-up { opacity: 1; transform: translateY(0); }
+        .d-1 { transition-delay: 0.2s; }
+        .d-2 { transition-delay: 0.35s; }
+
+        .live-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #ffffff;
+            background: rgba(255, 42, 60, 0.14); border: 1px solid rgba(255, 42, 60, 0.45);
+            padding: 6px 14px; border-radius: 4px; margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-family: 'Russo One', sans-serif; font-size: clamp(38px, 6.2vw, 76px);
+            line-height: 1.04; text-transform: uppercase; margin-bottom: 24px; max-width: 860px;
+        }
+        .hero h1 span { color: var(--red); }
+        .hero p { color: var(--muted); font-size: 17px; max-width: 540px; margin-bottom: 36px; line-height: 1.6; }
+
+        .specs-strip {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+            margin-top: 64px; border-top: 1px solid var(--border); padding-top: 32px;
+        }
+        .spec-box span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); display: block; margin-bottom: 6px; }
+        .spec-box strong { font-family: 'Russo One', sans-serif; font-size: 22px; color: #fff; }
+
+        /* Секции и зоны клуба */
+        .section { padding: 95px 0; border-top: 1px solid var(--border); }
+        .sec-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--red); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .sec-title { font-family: 'Russo One', sans-serif; font-size: clamp(28px, 4vw, 42px); text-transform: uppercase; margin-bottom: 44px; }
+
+        .zones-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .zone-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+            padding: 32px; display: flex; flex-direction: column; justify-content: space-between;
+            transition: transform 0.35s var(--ease), border-color 0.35s;
+        }
+        .zone-card:hover { transform: translateY(-6px); border-color: rgba(255, 42, 60, 0.55); }
+        .zone-card.pro { border-color: rgba(255, 42, 60, 0.45); background: linear-gradient(180deg, #1a1012 0%, #101014 100%); }
+        .zone-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--red); margin-bottom: 12px; }
+        .zone-card h3 { font-family: 'Russo One', sans-serif; font-size: 24px; margin-bottom: 12px; }
+        .zone-specs { list-style: none; color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+        .zone-specs li { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .zone-price { font-family: 'Russo One', sans-serif; font-size: 28px; color: #fff; }
+        .zone-price small { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--muted); font-weight: 400; }
+
+        /* Интерактивная карта зала и бронь */
+        .booking-wrap {
+            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 36px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 38px;
+        }
+        .seats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 24px 0; }
+        .seat {
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+            padding: 16px 8px; text-align: center; font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; cursor: pointer; transition: 0.2s; user-select: none; color: #fff;
+        }
+        .seat:hover:not(.busy) { border-color: var(--red); }
+        .seat.selected { background: var(--red); color: #ffffff; font-weight: 700; border-color: var(--red); }
+        .seat.busy { opacity: 0.3; cursor: not-allowed; text-decoration: line-through; }
+
+        .legend { display: flex; gap: 20px; font-size: 12px; color: var(--muted); }
+        .legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+        .summary-card {
+            background: #09090c; border: 1px solid var(--border); border-radius: 12px;
+            padding: 28px; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .hours-row { display: flex; gap: 8px; margin: 14px 0 24px; }
+        .hr-btn {
+            flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text); padding: 10px; border-radius: 6px; cursor: pointer;
+            font-family: 'JetBrains Mono', monospace; font-size: 13px;
+        }
+        .hr-btn.active { border-color: var(--red); color: var(--red); }
+        .book-total { font-family: 'Russo One', sans-serif; font-size: 36px; color: var(--red); margin: 8px 0 20px; }
+
+        footer { border-top: 1px solid var(--border); padding: 40px 0; color: var(--muted); font-size: 13px; }
+
+        @media (max-width: 880px) {
+            .specs-strip, .zones-grid, .booking-wrap { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<!-- КОНЕЦ ЧАСТИ 1 -->
+<body>
+
+    <div class="gate-left"></div>
+    <div class="gate-right"></div>
+    <div class="gate-badge">BERSERK // 360HZ</div>
+
+    <header>
+        <div class="wrap nav">
+            <div class="logo"><span class="logo-dot"></span> BERSERK</div>
+            <nav class="nav-links">
+                <a href="#zones">Железо и залы</a>
+                <a href="#booking">Бронь ПК</a>
+                <a href="#contacts">Адрес</a>
+            </nav>
+            <a href="#booking" class="btn-red">Занять место</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="wrap">
+                <div class="live-pill anim-up">● СВОБОДНО 14 ИЗ 30 ПК • ПИНГ 2 МС</div>
+                <h1 class="anim-up d-1">Твоя киберспортивная база на <span>RTX 4090</span> и 360 Гц.</h1>
+                <p class="anim-up d-2">Никаких лагов, просадок FPS и продавленных кресел. Профессиональная периферия Logitech G Pro, гигабитный канал и круглосуточный бар.</p>
+                <div class="anim-up d-2">
+                    <a href="#booking" class="btn-red">Выбрать компьютер на карте</a>
+                </div>
+
+                <div class="specs-strip anim-up d-2">
+                    <div class="spec-box"><span>ВИДЕОКАРТЫ</span><strong>RTX 4080 / 4090</strong></div>
+                    <div class="spec-box"><span>МОНИТОРЫ</span><strong>ZOWIE 360 HZ</strong></div>
+                    <div class="spec-box"><span>ПРОЦЕССОРЫ</span><strong>RYZEN 7 7800X3D</strong></div>
+                    <div class="spec-box"><span>РЕЖИМ РАБОТЫ</span><strong>24 / 7 БЕЗ ВЫХОДНЫХ</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="zones">
+            <div class="wrap">
+                <div class="sec-label">01 / Конфигурации</div>
+                <h2 class="sec-title">Игровые зоны клуба</h2>
+
+                <div class="zones-grid">
+                    <div class="zone-card">
+                        <div>
+                            <div class="zone-tag">STANDARD • 18 МЕСТ</div>
+                            <h3>MAIN HALL</h3>
+                            <ul class="zone-specs">
+                                <li>Intel Core i5-13600KF / RTX 4070</li>
+                                <li>Монитор 27" IPS 240 Гц</li>
+                                <li>Гарнитура HyperX Cloud II</li>
+                                <li>Кресло DXRacer Formula</li>
+                            </ul>
+                        </div>
+                        <div class="zone-price">160 ₽ <small>/ час</small></div>
+                    </div>
+
+                    <div class="zone-card pro">
+                        <div>
+                            <div class="zone-tag">PRO ZONE • 8 МЕСТ</div>
+                            <h3>BERSERK BOOTCAMP</h3>
+                            <ul class="zone-specs">
+                                <li>Ryzen 7 7800X3D / RTX 4080 Super</li>
+                                <li>Монитор BenQ Zowie 2566K 360 Гц</li>
+                                <li>Мышь Logitech G Pro X Superlight 2</li>
+                                <li>Звукоизолированная VIP-комната</li>
+                            </ul>
+                        </div>
+                        <div class="zone-price">240 ₽ <small>/ час</small></div>
+                    </div>
+
+                    <div class="zone-card">
+                        <div>
+                            <div class="zone-tag">DUO & CHILL • 4 КАПСУЛЫ</div>
+                            <h3>PS5 LOUNGE</h3>
+                            <ul class="zone-specs">
+                                <li>PlayStation 5 + 4K OLED 65" 120 Гц</li>
+                                <li>4 геймпада DualSense Edge</li>
+                                <li>Все новинки, FC 26, UFC, MK1</li>
+                                <li>Мягкий диван и кальянный сервис</li>
+                            </ul>
+                        </div>
+                        <div class="zone-price">450 ₽ <small>/ час за комнату</small></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+<!-- КОНЕЦ ЧАСТИ 2 -->
+        <section class="section" id="booking">
+            <div class="wrap">
+                <div class="sec-label">02 / Онлайн-бронь</div>
+                <h2 class="sec-title">Выберите места на карте</h2>
+
+                <div class="booking-wrap">
+                    <div>
+                        <div style="font-size:14px; color:var(--muted);">Кликните по свободным ПК (можно выбрать сразу несколько для команды):</div>
+                        <div class="seats-grid" id="seatsGrid">
+                            <div class="seat" data-name="PC-01" data-rate="160">PC-01</div>
+                            <div class="seat" data-name="PC-02" data-rate="160">PC-02</div>
+                            <div class="seat busy">PC-03</div>
+                            <div class="seat" data-name="PC-04" data-rate="160">PC-04</div>
+                            <div class="seat" data-name="PC-05" data-rate="160">PC-05</div>
+                            <div class="seat busy">PRO-01</div>
+                            <div class="seat" data-name="PRO-02" data-rate="240">PRO-02</div>
+                            <div class="seat" data-name="PRO-03" data-rate="240">PRO-03</div>
+                            <div class="seat" data-name="PRO-04" data-rate="240">PRO-04</div>
+                            <div class="seat busy">PRO-05</div>
+                        </div>
+
+                        <div class="legend">
+                            <span><i class="leg-dot" style="background:var(--surface-2); border:1px solid var(--border);"></i> Свободно</span>
+                            <span><i class="leg-dot" style="background:var(--red);"></i> Выбрано</span>
+                            <span><i class="leg-dot" style="background:rgba(255,255,255,0.12);"></i> Занято</span>
+                        </div>
+                    </div>
+
+                    <div class="summary-card">
+                        <div>
+                            <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--muted);">ДЛИТЕЛЬНОСТЬ СЕССИИ</div>
+                            <div class="hours-row">
+                                <button class="hr-btn active" data-hrs="1">1 ч</button>
+                                <button class="hr-btn" data-hrs="3">3 ч</button>
+                                <button class="hr-btn" data-hrs="5">5 ч</button>
+                                <button class="hr-btn" data-hrs="12">Ночь</button>
+                            </div>
+
+                            <div style="font-size:13px; color:var(--muted);">Выбранные ПК: <strong id="chosenList" style="color:#fff;">не выбраны</strong></div>
+                            <div class="book-total" id="bookSum">0 ₽</div>
+                        </div>
+                        <button class="btn-red" style="width:100%;" id="confirmBook">Забронировать места</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="contacts">
+        <div class="wrap" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+            <div>BERSERK • Киберспортивный клуб 24/7</div>
+            <div>Демонстрационный кейс портфолио ZYLOR ARENA</div>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => document.body.classList.add('entered'), 350);
+        });
+
+        let selectedHours = 1;
+        const seats = document.querySelectorAll('.seat:not(.busy)');
+        const hrBtns = document.querySelectorAll('.hr-btn');
+        const chosenListEl = document.getElementById('chosenList');
+        const bookSumEl = document.getElementById('bookSum');
+
+        function recalcBooking() {
+            const activeSeats = document.querySelectorAll('.seat.selected');
+            if (activeSeats.length === 0) {
+                chosenListEl.textContent = 'не выбраны';
+                bookSumEl.textContent = '0 ₽';
+                return;
+            }
+            let names = [];
+            let hourlySum = 0;
+            activeSeats.forEach(s => {
+                names.push(s.dataset.name);
+                hourlySum += Number(s.dataset.rate);
+            });
+            const multiplier = selectedHours === 12 ? 7 : selectedHours;
+            chosenListEl.textContent = names.join(', ');
+            bookSumEl.textContent = (hourlySum * multiplier).toLocaleString('ru-RU') + ' ₽';
+        }
+
+        seats.forEach(seat => {
+            seat.addEventListener('click', () => {
+                seat.classList.toggle('selected');
+                recalcBooking();
+            });
+        });
+
+        hrBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                hrBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedHours = Number(btn.dataset.hrs);
+                recalcBooking();
+            });
+        });
+
+        document.getElementById('confirmBook').addEventListener('click', () => {
+            if (chosenListEl.textContent === 'не выбраны') {
+                alert('Сначала выберите хотя бы один свободный ПК на карте!');
+            } else {
+                alert(`Места (${chosenListEl.textContent}) успешно забронированы на сумму ${bookSumEl.textContent}!`);
+            }
+        });
+    </script>
+</body>
+</html>
+<!-- КОНЕЦ ЧАСТИ 3 -->
